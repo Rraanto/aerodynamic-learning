@@ -1,0 +1,23 @@
+domain:
+  - "Multifidelity simulation" 
+  - "Spatio-temporal modeling"
+
+problem: >
+  Low-fidelity models allow for fast simulations but are inherently less precise, the computational speed difference is intensified for spatio-temporal outputs and so is the precision. 
+
+review_topic: >
+  Combining use of models with different fidelity levels
+
+goals:
+  - "Methods for combining multifidelity outputs"
+  - "Methods for calibrating low-fidelity data with high-fidelity data"
+
+applications:
+  - "Aerodynamics"
+  - "Spatio-temporal models"
+
+preferences:
+  primary_sources: preferred
+  reference_validity: highest
+  implementation_relevance: high
+  verbosity: low
