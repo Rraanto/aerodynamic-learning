@@ -1,0 +1,24 @@
+domain:
+  - "Field learning"
+  - "Clustering"
+  - "Functional dimension reduction"
+
+problem: >
+  The aerodynamic model can be viewed as a mapping from airfoil parameter space to computed aerodynamic field on the angle of attack and reynolds domain, which is high dimensional, and is not enough to intuitively classify airfoils. 
+
+review_topic: >
+  Functional data analysis for clustering airfoils based on their aerodynamic performance on an operating domain parameterised by angle of attack and reynolds number 
+
+goals:
+  - "Methods for clustering high dimensional parameterised airfoils into 2D points"
+  - "Airfoil classification methods based on their  aerodynamic performance on 2D parameter space"
+
+applications:
+  - "Aerodynamics"
+  - "Design optimisation"
+
+preferences:
+  primary_sources: preferred
+  reference_validity: highest
+  implementation_relevance: high
+  verbosity: low

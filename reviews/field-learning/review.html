@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>review</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="review_files/libs/clipboard/clipboard.min.js"></script>
+<script src="review_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="review_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="review_files/libs/quarto-html/popper.min.js"></script>
+<script src="review_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="review_files/libs/quarto-html/anchor.min.js"></script>
+<link href="review_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="review_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="review_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="review_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="review_files/libs/bootstrap/bootstrap-9cdab613b390c50aaa60b5117ea501ec.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="summary" class="level1">
+<h1>Summary</h1>
+<p>The search was fruitful for general functional dimension reduction and clustering, including methods designed for multivariate functions and two-dimensional surfaces. These methods transfer naturally to treating each airfoil as a vector-valued field over angle of attack and Reynolds number. Direct aerodynamic coverage is weaker: verified studies embed pressure fields or map scalar performance objectives, but none found clusters many airfoils from complete aerodynamic-performance surfaces over both operating variables. The main methodological caution is that a two-dimensional display is not necessarily a reliable clustering space; clusters should normally be fitted and validated in a richer functional representation, then shown in two dimensions.</p>
+</section>
+<section id="reference-methods" class="level1">
+<h1>Reference methods</h1>
+<section id="methods-for-clustering-high-dimensional-parameterised-airfoils-into-2d-points" class="level2">
+<h2 class="anchored" data-anchor-id="methods-for-clustering-high-dimensional-parameterised-airfoils-into-2d-points">Methods for clustering high dimensional parameterised airfoils into 2D points</h2>
+<section id="multivariate-functional-pca-followed-by-clustering" class="level3">
+<h3 class="anchored" data-anchor-id="multivariate-functional-pca-followed-by-clustering">Multivariate functional PCA followed by clustering</h3>
+<p>Smooth each aerodynamic response surface, combine outputs such as lift and drag as multivariate functional data, and represent every airfoil by functional principal-component scores. The first two scores provide an interpretable linear map, while clustering can use enough retained scores to preserve relevant variation; Gaussian-mixture clustering of multivariate functional scores supplies probabilistic memberships <span class="citation" data-cites="happ2018multivariate jacques2014model">[@happ2018multivariate; @jacques2014model]</span>.</p>
+</section>
+<section id="cluster-aware-functional-subspaces" class="level3">
+<h3 class="anchored" data-anchor-id="cluster-aware-functional-subspaces">Cluster-aware functional subspaces</h3>
+<p>Functional factorial k-means estimates the grouping and the low-dimensional subspace together, avoiding the risk that variance-maximizing principal components omit directions that separate airfoils. It is a useful alternative when the primary objective is cluster discrimination rather than reconstruction, although a two-dimensional restriction should be checked against higher-dimensional solutions <span class="citation" data-cites="yamamoto2014functional">[@yamamoto2014functional]</span>.</p>
+</section>
+<section id="tensor-product-surface-clustering" class="level3">
+<h3 class="anchored" data-anchor-id="tensor-product-surface-clustering">Tensor-product surface clustering</h3>
+<p>Represent each angle-of-attack–Reynolds surface in a tensor-product spline basis, then apply k-means or spectral clustering to the coefficient representation. This method directly handles bivariate surfaces and measurement error, making it the most literal statistical match to the proposed aerodynamic-performance field <span class="citation" data-cites="zambom2022basis">[@zambom2022basis]</span>.</p>
+</section>
+<section id="nonlinear-functional-manifold-embeddings" class="level3">
+<h3 class="anchored" data-anchor-id="nonlinear-functional-manifold-embeddings">Nonlinear functional manifold embeddings</h3>
+<p>When stall and regime transitions create nonlinear variation, functional Isomap-style coordinates or functional diffusion maps can produce two-dimensional embeddings from distances between functions. They preserve manifold or multiscale neighborhood structure better than linear FPCA in suitable cases, but cluster stability should be assessed independently of the plotted coordinates <span class="citation" data-cites="chen2012nonlinear barroso2024functional">[@chen2012nonlinear; @barroso2024functional]</span>.</p>
+</section>
+</section>
+<section id="airfoil-classification-methods-based-on-their-aerodynamic-performance-on-2d-parameter-space" class="level2">
+<h2 class="anchored" data-anchor-id="airfoil-classification-methods-based-on-their-aerodynamic-performance-on-2d-parameter-space">Airfoil classification methods based on their aerodynamic performance on 2D parameter space</h2>
+<section id="operating-region-weighted-functional-clustering" class="level3">
+<h3 class="anchored" data-anchor-id="operating-region-weighted-functional-clustering">Operating-region-weighted functional clustering</h3>
+<p>Sparse functional clustering learns which parts of a domain distinguish groups instead of weighting all operating conditions equally. Extending its weight function from curves to the angle-of-attack–Reynolds surface is a transferable idea, not a directly validated airfoil method; tensor-product surface clustering supplies the required bivariate representation <span class="citation" data-cites="floriello2017sparse zambom2022basis">[@floriello2017sparse; @zambom2022basis]</span>.</p>
+</section>
+<section id="self-organizing-performance-maps" class="level3">
+<h3 class="anchored" data-anchor-id="self-organizing-performance-maps">Self-organizing performance maps</h3>
+<p>Self-organizing maps give a topology-preserving two-dimensional lattice that can expose performance/design trade-offs and cluster neighborhoods. A direct airfoil study maps CFD-derived maximum lift and maximum lift-to-drag objectives together with PARSEC variables, but it reduces each airfoil to scalar objectives rather than using its full operating-domain field <span class="citation" data-cites="jung2016implementation">[@jung2016implementation]</span>.</p>
+</section>
+<section id="aerodynamic-field-latent-representations" class="level3">
+<h3 class="anchored" data-anchor-id="aerodynamic-field-latent-representations">Aerodynamic-field latent representations</h3>
+<p>Nonlinear embeddings and convolutional autoencoders have been applied directly to airfoil pressure fields: one compares kernel PCA, locally linear embedding, and t-SNE for transient CFD snapshots, while another learns a very low-dimensional representation that separates linear and stalled aerodynamic behavior. These results support nonlinear performance embeddings, but they address flow states or stall prediction rather than clustering multiple airfoils across a two-parameter operating domain <span class="citation" data-cites="vasudevan2023manifold saetta2022machine">[@vasudevan2023manifold; @saetta2022machine]</span>.</p>
+</section>
+</section>
+</section>
+<section id="essential-reviews-and-state-of-the-art" class="level1">
+<h1>Essential reviews and state of the art</h1>
+<section id="general-reviews" class="level2">
+<h2 class="anchored" data-anchor-id="general-reviews">General reviews</h2>
+<section id="functional-data-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="functional-data-analysis">Functional data analysis</h3>
+<p>Wang, Chiou, and Müller provide a compact overview of FPCA, nonlinear dimension reduction, clustering, and classification. It is the best broad entry point for formulating aerodynamic response surfaces as functional observations <span class="citation" data-cites="wang2016functional">[@wang2016functional]</span>.</p>
+</section>
+<section id="model-based-functional-clustering-and-classification" class="level3">
+<h3 class="anchored" data-anchor-id="model-based-functional-clustering-and-classification">Model-based functional clustering and classification</h3>
+<p>Chamroukhi and Nguyen organize mixture-based methods for curves and surfaces, including heterogeneous, incomplete, and dynamically structured data. It is the most focused navigation anchor for probabilistic functional clustering <span class="citation" data-cites="chamroukhi2019model">[@chamroukhi2019model]</span>.</p>
+</section>
+</section>
+<section id="application-specific-reviews" class="level2">
+<h2 class="anchored" data-anchor-id="application-specific-reviews">Application-specific reviews</h2>
+<section id="machine-learning-in-aerodynamic-shape-optimization" class="level3">
+<h3 class="anchored" data-anchor-id="machine-learning-in-aerodynamic-shape-optimization">Machine learning in aerodynamic shape optimization</h3>
+<p>Li, Du, and Martins review compact design spaces, aerodynamic surrogates, and optimization architectures for airfoils and wings. It gives the relevant aerodynamic context and clarifies that most dimensionality-reduction work targets geometry or flow surrogates rather than performance-surface classification <span class="citation" data-cites="li2022machine">[@li2022machine]</span>.</p>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

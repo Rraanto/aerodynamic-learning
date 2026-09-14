@@ -1,33 +1,55 @@
 # Summary
 
-The search was fruitful for both requested goals. Multifidelity output combination is well covered by autoregressive Gaussian processes, nonlinear neural or Gaussian-process mappings, and basis-reduced methods for field-valued outputs. Low-to-high-fidelity calibration is also well covered by scale-plus-discrepancy models and learned residual corrections, including physics-informed variants. Aerodynamic spatial fields and time-dependent quantities have direct demonstrations, but evidence for methods validated on fully spatio-temporal aerodynamic fields remains comparatively thin; this is the clearest application gap.
+The search was fruitful for both goals. Gaussian-process, reduced-basis, and neural/operator methods provide strong coverage for scalar, vector, spatial-field, and time-dependent outputs. Aerodynamic evidence includes lift/drag databases, hypersonic pressure distributions, unsteady loads, and one direct spatio-temporal airfoil-flow study. The weakest area remains independent validation on fully spatio-temporal aerodynamic fields with realistic mesh mismatch, noisy measurements, and changing flow regimes; method comparisons are mostly case-specific.
 
 # Reference methods
 
 ## Methods for combining multifidelity outputs
 
-### Autoregressive co-kriging
+### Autoregressive Gaussian processes and co-kriging
 
-Model each higher-fidelity response as a scaled lower-fidelity process plus an independent Gaussian-process discrepancy. This is the most established starting point when fidelities are nested, reasonably correlated, and uncertainty estimates matter; recursive and vector-valued extensions support multiple levels and random fields [@kennedy2000predicting; @parussini2017multifidelity].
+Represent the high-fidelity response as a scaled low-fidelity Gaussian process plus an independent discrepancy. This is the clearest probabilistic baseline when fidelities are correlated and high-fidelity samples are scarce; nonlinear autoregressive GPs replace the global linear link when correlation varies over the input domain [@kennedy2000predicting; @perdikaris2017nonlinear].
 
-### Nonlinear cross-fidelity learning
+### Multi-output and reduced-basis field fusion
 
-When the low-to-high relationship changes across the input domain or is strongly nonlinear, nonlinear autoregressive Gaussian processes and composite neural networks learn the cross-fidelity map rather than imposing a global linear scale. These methods are attractive for complex PDE response surfaces, though their flexibility raises data and validation requirements [@perdikaris2017nonlinear; @meng2020composite].
+For field-valued outputs, fuse coefficients in a spectral or POD basis rather than fitting every grid value independently. Multivariate recursive GPs retain cross-output covariance, while POD-co-kriging has a direct demonstration on hypersonic surface-pressure distributions and permits different low- and high-fidelity output dimensions [@parussini2017multi; @rokita2018multifidelity].
 
-### Reduced-basis fusion for spatial and temporal outputs
+### Spatio-temporal Gaussian-process fusion
 
-For high-dimensional fields, first compressing outputs and then fusing fidelity levels in coefficient space avoids fitting a separate surrogate at every grid point. POD-co-kriging has been demonstrated on hypersonic surface-pressure distributions, while multifidelity recurrent networks directly target parameterized time-dependent outputs, including unsteady aerodynamic coefficients [@rokita2018multifidelity; @conti2023multifidelity].
+Embed spatial coordinates, time, low-fidelity fields, and selected derivatives in a nonlinear Gaussian-process map. This directly targets sparse high-fidelity measurements combined with spatially and temporally dense simulations; it has been tested with RANS, LES, and DNS data around a NACA 0012 airfoil. Hierarchical kriging with time-delayed inputs is a complementary choice for unsteady aerodynamic load histories and supplies predictive uncertainty [@zhang2022fusion; @peng2023multi].
+
+### Multifidelity neural operators
+
+Learn the low-to-high map between functions rather than only between fixed-dimensional vectors. Composite multifidelity DeepONets support nonlinear field mappings and physics-informed training; a newer architecture adds physics-guided subsampling for data-efficient spatio-temporal unsteady-flow prediction [@howard2023multifidelity; @yang2025data].
 
 ## Methods for calibrating low-fidelity data with high-fidelity data
 
 ### Scale-plus-discrepancy calibration
 
-Estimate a multiplicative scale and an additive discrepancy from paired high-fidelity observations, then correct the low-fidelity predictor throughout the input domain. The Bayesian formulation supplies predictive uncertainty and is the clearest baseline when the residual is smooth and high-fidelity samples are scarce [@kennedy2000predicting].
+Estimate a scale and an additive discrepancy from paired fidelities, then propagate the corrected low-fidelity predictor with uncertainty. The original autoregressive construction is a suitable baseline for simulator-to-simulator correction, while the multifidelity calibration extension jointly incorporates field observations and simulator-specific calibration parameters [@kennedy2000predicting; @goh2013prediction].
 
 ### Physics-informed discrepancy Gaussian processes
 
-Physics-informed co-kriging builds the low-fidelity covariance from ensembles of physical-model outputs and learns a separate Gaussian-process discrepancy against high-fidelity observations. It is especially relevant when calibration should preserve known linear physical constraints while assimilating sparse field measurements [@yang2019physics].
+Construct the low-fidelity covariance from ensembles of physical-model outputs and learn a separate Gaussian-process discrepancy from sparse high-fidelity observations. This preserves deterministic linear physical constraints up to a derived error bound and is useful when calibration should not discard known model structure [@yang2019physics].
 
-### Learned residual and parameter calibration
+### Learned nonlinear correction maps
 
-Composite neural networks can learn linear and nonlinear low-to-high corrections, while corrected low-fidelity surrogates can be embedded in Bayesian parameter calibration to retain computational speed. The latter has a direct time-history dynamics demonstration near a hypersonic vehicle, but transferring it to aerodynamic flow fields requires application-specific validation [@meng2020composite; @absi2016multifidelity].
+Composite neural networks learn linear and nonlinear correction components jointly and scale better than exact Gaussian processes as sample size and output dimension grow. The general construction covers inverse PDE problems, and an aerodynamic specialization corrects Euler-derived lift and drag using sparse Navier--Stokes results [@meng2020composite; @he2020multi].
+
+# Essential reviews and state of the art
+
+## General reviews
+
+### Multifidelity methods for outer-loop computation
+
+Peherstorfer, Willcox, and Gunzburger organize methods into adaptation, fusion, and filtering and connect them to uncertainty propagation, inference, and optimization. It is the strongest foundational navigation source for deciding how a surrogate fits into a larger computational workflow [@peherstorfer2018survey].
+
+### Modern multifidelity-model taxonomy
+
+Fernández-Godino surveys fidelity definitions, combination strategies, sampling, reproducibility, benchmarking, and cost reporting across engineering applications. It complements the older survey with a more current and surrogate-focused taxonomy [@fernandezgodino2023review].
+
+## Application-specific reviews
+
+### Data-driven unsteady aerodynamics and aeroelasticity
+
+Kou and Zhang review system identification, feature extraction, and data fusion for aerodynamic fields and loads. It is the most useful application anchor for placing multifidelity fusion within unsteady aerodynamic reduced-order modeling [@kou2021data].
