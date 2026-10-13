@@ -1,0 +1,13 @@
+\contentsline {section}{\numberline {1}Question, scope, and hypotheses}{1}{section.1}%
+\contentsline {section}{\numberline {2}Population and operating domain}{2}{section.2}%
+\contentsline {section}{\numberline {3}Twelve objective definitions}{2}{section.3}%
+\contentsline {section}{\numberline {4}Functional reduction and evaluation protocol}{3}{section.4}%
+\contentsline {section}{\numberline {5}Inverse mapping and optimization experiment}{4}{section.5}%
+\contentsline {section}{\numberline {6}Numerical results}{5}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Cohort and conditional preservation}{5}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Decoded holdout queries}{5}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Optimized candidate re-evaluation}{6}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Interpretation across objectives}{6}{subsection.6.4}%
+\contentsline {section}{\numberline {7}Feasibility of latent-space shape optimization}{10}{section.7}%
+\contentsline {section}{\numberline {8}Additional quantities worth testing}{11}{section.8}%
+\contentsline {section}{\numberline {9}Reproducibility and limitations}{11}{section.9}%

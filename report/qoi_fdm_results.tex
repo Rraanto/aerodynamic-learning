@@ -1,0 +1,105 @@
+\subsection{Cohort and conditional preservation}
+
+Of 768 original shapes, 598 pass the confidence screen; 554 also reach every prescribed lift. The additional 44 exclusions change the population from the preceding CST study. Each split has 360 training, 83 validation, and 111 test shapes. There are 432 kernel fits, 360 decoded holdout evaluations, and 96 optimized candidates.
+
+\begin{center}\small\begin{tabular}{lrrrrr}\toprule Objective & NRMSE & Field error & Recall & Hull & Shape RMS\\\midrule
+
+min\_drag & 0.015 & 1.257 & 3.3\% & 82.3\% & 0.945\% \\
+
+best\_drag\_lift & 0.116 & 1.276 & 4.2\% & 78.4\% & 0.911\% \\
+
+mean\_drag & 0.035 & 1.256 & 3.2\% & 82.0\% & 1.040\% \\
+
+multipoint\_drag & 0.063 & 1.334 & 4.1\% & 83.5\% & 0.967\% \\
+
+worst\_drag & 0.081 & 1.258 & 4.1\% & 79.9\% & 0.928\% \\
+
+drag\_variability & 0.066 & 1.145 & 5.3\% & 83.2\% & 0.908\% \\
+
+mean\_efficiency & 0.013 & 1.119 & 4.9\% & 76.9\% & 0.926\% \\
+
+best\_endurance & 0.035 & 1.178 & 5.8\% & 79.6\% & 0.928\% \\
+
+moment\_rms & 0.022 & 1.144 & 4.3\% & 77.5\% & 0.982\% \\
+
+lift\_tracking & 0.023 & 0.918 & 5.4\% & 78.7\% & 0.897\% \\
+
+trimmed\_drag & 0.050 & 1.213 & 4.1\% & 80.8\% & 0.983\% \\
+
+trimmed\_worst\_drag & 0.014 & 1.137 & 5.0\% & 88.6\% & 0.934\% \\
+
+\bottomrule\end{tabular}\end{center}
+
+Table entries are means across three splits; shape RMS is percent chord and hull is supported test fraction. Spearman correlations average above 0.9997 for every objective. Nevertheless, eleven of twelve mean field errors exceed one. Lift tracking is the only objective with a mean error below the training-mean baseline (0.918). Five-neighbor recall is only 3.2--5.8\%. The ten-neighbor shape errors are 0.927--1.028\% chord, compared with 0.841\% for the mean shape on the same full test sets. Barycentric inverse errors are 0.897--1.040\% on supported subsets; those subsets differ from the full-test baseline, so that comparison is descriptive rather than a paired baseline test.
+
+Best drag/lift has the largest average scalar error (0.116), with split values 0.058, 0.102, and 0.189 despite almost perfect ranks. Worst drag ranges from 0.007 to 0.225. Thus reliable ordering need not imply accurate scalar distances or stable tail reconstruction. The selected quantity weight is 16 in 34 of 36 fits, with the remaining two selecting 4. This boundary preference suggests that scalar-only validation rewards progressively dominant target information; it does not establish that the search has found an optimal field/shape compromise.
+
+\subsection{Decoded holdout queries}
+
+\begin{center}\small\begin{tabular}{lrrr}\toprule Objective & Decoded QoI NRMSE & Median round trip & Minimum confidence\\\midrule
+
+min\_drag & 0.564 & 0.167 & 0.905 \\
+
+best\_drag\_lift & 0.251 & 0.179 & 0.900 \\
+
+mean\_drag & 0.666 & 0.384 & 0.826 \\
+
+multipoint\_drag & 0.994 & 0.659 & 0.885 \\
+
+worst\_drag & 0.511 & 0.180 & 0.866 \\
+
+drag\_variability & 0.193 & 0.095 & 0.869 \\
+
+mean\_efficiency & 0.378 & 0.284 & 0.885 \\
+
+best\_endurance & 0.160 & 0.097 & 0.855 \\
+
+moment\_rms & 0.376 & 0.149 & 0.907 \\
+
+lift\_tracking & 0.140 & 0.083 & 0.927 \\
+
+trimmed\_drag & 0.702 & 0.477 & 0.822 \\
+
+trimmed\_worst\_drag & 0.207 & 0.112 & 0.842 \\
+
+\bottomrule\end{tabular}\end{center}
+
+These 30 queries per objective are not the full holdout set. Their decoded QoI errors are substantially larger than conditional scalar interpolation errors. Multipoint drag reaches approximately one training standard deviation of error and a median round trip of 0.659 training latent distances. Even the better round trips remain nonzero. All these decoded evaluations exceed the confidence threshold, so model-confidence screening alone does not detect representation inconsistency.
+
+\subsection{Optimized candidate re-evaluation}
+
+\begin{center}\small\begin{tabular}{lrrrr}\toprule Objective & Coarse gain (\%) & Fine gain (\%) & Larger model (\%) & Round trip\\\midrule
+
+min\_drag & 0.0000 & 0.0000 & -0.0000 & 0.000 \\
+
+best\_drag\_lift & -0.0002 & 0.0001 & -0.0005 & 0.000 \\
+
+mean\_drag & 0.0010 & 0.0010 & 0.0010 & 0.000 \\
+
+multipoint\_drag & 0.0003 & 0.0003 & 0.0004 & 0.000 \\
+
+worst\_drag & 0.0004 & 0.0003 & 0.0002 & 0.000 \\
+
+drag\_variability & -0.0531 & -0.0427 & -0.0487 & 0.206 \\
+
+mean\_efficiency & 0.6801 & 0.6777 & 1.1600 & 0.455 \\
+
+best\_endurance & 0.0005 & 0.0005 & 0.0005 & 0.000 \\
+
+moment\_rms & -0.0004 & -0.0003 & -0.0002 & 0.000 \\
+
+lift\_tracking & -0.0023 & -0.0023 & -0.0026 & 0.000 \\
+
+trimmed\_drag & 0.0002 & 0.0002 & 0.0002 & 0.000 \\
+
+trimmed\_worst\_drag & -1.1831 & -1.1691 & -0.5137 & 0.000 \\
+
+\bottomrule\end{tabular}\end{center}
+
+All 96 optimizations report success and pass the coarse-grid confidence and geometry screens. This does not imply improvement. Mean efficiency is the only objective with a selected positive gain above 0.001\%: 0.680\% on the original grid, 0.678\% on the refined grid, and 1.160\% with the larger model. Its round-trip error is 0.455, demonstrating useful task improvement despite poor coordinate consistency in this one case. This is a modest model-based result, not a general validation of the inverse.
+
+Most other selected candidates are effectively the incumbent: the decoder uses a tiny interior buffer at the hull boundary, so changes of order $10^{-4}$ percent should not be treated as design advances. Minimum drag changes sign with network size. Worst prescribed-lift drag deteriorates by 1.183\% on the original grid and 0.514\% with the larger model; its tiny round trip does not imply a good objective value, because it can return a different training neighborhood. The original incumbent must be retained whenever a candidate is worse. Neither a feasible hull point nor optimizer success is sufficient for adoption.
+
+\subsection{Interpretation across objectives}
+
+The objective-correlation matrix identifies shared and competing rankings without comparing arbitrary diffusion-axis signs. The embedding panels show strongly curved or thin scalar orderings. Together with high target weights, near-perfect scalar ranks, poor field recall, and inaccurate geometric inversion, the evidence supports interpreting these maps primarily as objective-organized descriptors. It does not support treating the two coordinates as a generally invertible shape parameterization. The mean-efficiency candidate is a useful exception for further validation, while the prescribed-lift results provide no meaningful optimization gain in this run.

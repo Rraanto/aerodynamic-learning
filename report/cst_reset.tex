@@ -1,0 +1,266 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=17mm]{geometry}
+\usepackage{amsmath,booktabs,graphicx,hyperref}
+\hypersetup{colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=blue}
+\graphicspath{{../figures/cst_reset/min_drag_balanced/}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\title{Research reset: CST fields and quantity-aware functional reduction}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-13mm}
+\section{Experiment 1: a new CST database}
+\textbf{Question.} Can two or three coordinates preserve a selected aerodynamic
+quantity while supporting a useful map back to realizable airfoils and fields?
+This experiment implements \texttt{next\_experimentations.md}. The previous
+NACA population is historical context; none of its fields or fitted reductions
+enter this study.
+
+Standard Class--Shape Transformation (CST) \cite{kulfan2008} defines the two
+surfaces, in chord units, by
+\[
+ y^{u,l}(x)=x^{1/2}(1-x)\sum_{j=0}^{7}a^{u,l}_j
+ \binom{7}{j}x^j(1-x)^{7-j}\ \mathbin{\pm}\ \frac{0.0025}{2}x,
+ \quad x\in[0,1].
+\]
+There is no leading-edge modification. Sample half-thickness weights
+$h_j\in[0.10,0.30]$ and camber weights $b_j\in[-0.06,0.10]$, with $b_0=0$,
+and set $a^u=h+b$, $a^l=-h+b$. This gives 15 independent variables, equal
+upper/lower nose radii, and positive thickness. Degree-seven Bernstein
+polynomials and the fixed class function define the geometry directly; this
+is not a fit to a NACA family. Ordinate derivatives diverge at the rounded
+nose \cite{kulfan2008}, so the proposed $C^1([0,1])$ graph assumption must be
+replaced by regularity on the interior or a regular contour parameterization.
+
+A scrambled Sobol pool of 2,048 proposals (seed 42) provides 768 samples after
+a 301-station geometric screen: maximum thickness in $[0.08,0.20]$ and
+maximum absolute camber at most 0.05. The sampled thickness range is
+0.101--0.200 and camber magnitude range 0.0011--0.0309. The centered
+coefficient matrix has rank 15.
+
+\begin{figure}[h]
+\centering\includegraphics[width=.94\linewidth]{dataset.pdf}
+\caption{Six shapes selected by equally spaced thickness ranks, and their
+predicted drag curves at the largest Reynolds number. These illustrate the
+new CST corpus rather than physical class labels.}
+\end{figure}
+
+NeuralFoil 0.3.3, model size \texttt{large}, evaluates $C_D,C_L,C_M$ and
+pointwise analysis confidence on $31\times21$ conditions:
+$\alpha\in[-5,12]^\circ$, $Re\in[3\times10^5,3\times10^6]$, geometrically
+spaced in Reynolds number. Mach is zero, $n_{\rm crit}=9$, and transition is
+unforced. The corpus contains 499,968 aerodynamic cases. All finite positive-drag
+outputs are retained, including low-confidence cases. The primary analysis
+requires minimum confidence across the domain at least 0.75: 598 shapes
+qualify and 170 are excluded from analysis, not deleted. Confidence is a model
+diagnostic, not a validated error bound \cite{neuralfoil}.
+
+The fixed random split is 388 training, 89 validation, and 121 test shapes.
+The default objective is literally
+\[
+ q(F)=\min_{(\alpha,Re)\in\Omega_{\rm grid}} C_D(\alpha,Re).
+\]
+It is a grid minimum, without prescribed lift or trim. In 87.1\% of eligible
+shapes the minimum occurs at the largest Reynolds number; it is not a measure
+of good performance throughout the domain. The code also supports mean drag
+and negative mean absolute-lift/drag objectives.
+
+\newpage
+\section{Experiment 2: preserving a quantity versus preserving fields}
+Use the normalized product measure $d\alpha\,d\log Re$ and training-only
+coefficient scales $s_c$. The common balanced field distance is
+\[
+ d_F(i,j)^2=\sum_{c\in\{D,L,M\}}s_c^{-2}
+ \left\langle(F_{ic}-F_{jc})^2\right\rangle_\Omega.
+\]
+Functional PCA (FPCA) diagonalizes the quadrature-weighted training fields
+\cite{happ2016}. Ordinary functional diffusion maps (FDM) provide a nonlinear
+control \cite{barroso2024}. The quantity-aware variant is this experiment's
+explicit kernel choice, not a claim attributed to that paper:
+\[
+ D_{ij}^2=\frac{d_F(i,j)^2}{\operatorname{median}_{i<j}d_F(i,j)^2}
+       +\lambda\frac{(q_i-q_j)^2}{s_q^2},\qquad
+ K_{ij}=\exp(-D_{ij}^2/\varepsilon).
+\]
+Normalize kernel density with exponent one, row-normalize to a Markov
+matrix, and use its nonconstant right eigenvectors multiplied by their
+eigenvalues (diffusion time one). Held-out fields use Nystr\"om extension.
+Bandwidth multipliers are $\{0.1,0.25,1,4,16\}$ times the median training
+$D^2$, and quantity weights are $\{0.1,0.25,1,4,16\}$. Ordinary FDM uses
+$\lambda=0$. Validation selects ordinary FDM by field reconstruction and
+quantity-aware FDM by quantity-neighbor error. No test row is used in fitting
+scales, bases, kernel bandwidths, or surrogate parameters.
+
+\textbf{Information supplied.} Every encoder receives the aerodynamic field.
+Quantity-aware extension also computes $q$ from that field. Thus the test
+scores below measure preservation after projection of known fields, not blind
+prediction from new CST coefficients. A scalar coordinate $z=q$ would preserve
+$q$ exactly by definition; small quantity error alone cannot establish a useful
+field inverse or a new aerodynamic predictor.
+
+\begin{center}\small
+\input{cst_min_drag_balanced_table.tex}
+\end{center}
+QoI NRMSE is the held-out error of a smooth RBF kernel-ridge fit divided by
+training $s_q$; $\rho$ is its Spearman rank correlation. Field error is the
+weighted squared error of ten-neighbor field reconstruction divided by
+training-mean prediction error. Field and shape recall measure recovery of
+five training neighbors for each test query. Chance recall is 1.29\%.
+The same neighbor decoder is used for every method.
+
+\begin{figure}[h]
+\centering\includegraphics[width=.94\linewidth]{metric_tradeoff.pdf}
+\caption{Validation diagnostics for the full kernel search. Each point is a
+bandwidth/quantity-weight choice; colors encode quantity weight. Lower errors
+are preferable. Scalar preservation and full-field retention compete.}
+\end{figure}
+
+Two and three FPCA coordinates retain 68.1\% and 77.2\% of training variance;
+26 are needed for 99\%. Their direct linear test reconstruction errors are
+0.287 and 0.206. Quantity-aware FDM gives conditional QoI NRMSE
+0.0047--0.0054 but field error above 1.24, worse than the training mean.
+Choosing a weight solely for scalar preservation sacrifices much of the field.
+
+\newpage
+\section{Experiment 3: reading the projections and their clusters}
+\begin{figure}[h]
+\centering\includegraphics[width=.90\linewidth]{projection_maps.pdf}
+\caption{All 598 eligible shapes projected with training-fitted maps. Columns
+compare FPCA, ordinary FDM, and quantity-aware FDM in two dimensions. Rows
+color the same coordinates by minimum drag, maximum thickness, and signed
+camber at the largest absolute-camber station. Each row has a common color
+scale; coordinate scales differ between methods.}
+\end{figure}
+
+The quantity-aware map forms a thin, ordered curve: nearby coordinates have
+similar $q$, while thickness and camber still vary along that curve. Its
+ten-neighbor quantity spread is 0.046 training standard deviations, compared
+with 0.841 for FPCA-2. This compression of scalar variation does not preserve
+shape or aerodynamic neighborhoods. Quantity-aware five-neighbor recalls
+are 3.3\% for fields and 3.5\% for shapes; FPCA-3 recovers 43.3\% and 7.4\%.
+The three-dimensional maps are saved separately and do not resolve the
+quantity-aware field-reconstruction failure.
+
+Four-cluster K-means fits (20 initializations, seed 42) use training coordinates
+and assign all eligible shapes. FPCA-2 cluster mean $q$ values overlap strongly,
+from 0.00550 to 0.00630. Quantity-aware cluster means span 0.00488--0.00741;
+this is expected from the chosen scalar similarity, not independent evidence
+of physical airfoil classes. Cluster labels and member summaries are persisted.
+
+Ordinary FDM-2 has a localized spectral mode: the smallest coordinate
+participation fraction is 0.011, equivalent to concentration on roughly four
+of 388 training points. Its four-cluster population counts are 588, 1, 8, 1.
+The selected FDM-3 bandwidth is broader and participation rises to 0.245.
+Narrow-band pilot results are preserved rather than removed. Outlier
+localization is an observed limitation of this kernel/data pairing, not proof
+of a general disadvantage of functional diffusion maps.
+
+\newpage
+\section{Experiment 4: optimization and inverse-map consistency}
+For each map, fit an RBF kernel-ridge scalar surrogate using only training
+coordinates. Validation chooses ridge $\{0.001,0.01,0.1\}$ and length-scale
+multiplier $\{0.5,1,2\}$. Eight SLSQP starts minimize it inside the standardized
+training convex hull. A declared $10^{-6}$ interior buffer resolves boundary
+roundoff. A Delaunay barycentric decoder interpolates CST coefficients;
+convexity preserves coefficient bounds and positive thickness. Geometry is
+rechecked on 1,001 stations, and every reported candidate receives a fresh
+NeuralFoil evaluation. Up to three distinct decoded shapes per method are
+verified; coefficient distances below $10^{-4}$ are treated as duplicates.
+Failed solves and all candidate outputs are retained.
+
+For a field generator $G$, encoder $E$, and CST decoder $D$, define
+\[
+ \delta(z)=\frac{\|E(G(D(z)))-z\|}
+ {\operatorname{median}_{i<j}\|z_i-z_j\|}.
+\]
+The convex hull is an optimization support, not a demonstrated image
+$A=E(G(\mathcal P))$. A geometrically valid decoder can move the generated
+field away from the coordinate optimized by the surrogate.
+
+\begin{center}\small
+\input{cst_min_drag_balanced_optimization_table.tex}
+\end{center}
+Rows show the best verified new candidate per method. Change compares actual
+$q$ with the training incumbent $q=0.003535$; negative changes improve it.
+Round trip is $\delta$. All listed candidates pass the geometry and 0.75
+confidence screens. The adopted-design output retains the incumbent whenever
+a candidate is worse. These multistart searches are not global optimum proofs.
+
+\begin{figure}[h]
+\centering\includegraphics[width=.94\linewidth]{optimization.pdf}
+\caption{Surrogate predictions and fresh aerodynamic evaluations of all
+verified candidates. The dashed line is the best training shape. Smoothness
+of the scalar surrogate does not guarantee an accurate decoded field.}
+\end{figure}
+
+Quantity-aware candidates improve \texttt{large}-model grid drag by about
+2.6\%, but have round-trip discrepancies 0.16--0.27 of typical pair distance.
+Re-evaluation on a $61\times41$ grid reduces the gain to about 1.4\% against
+the finer-grid incumbent. The 12 fixed training-grid checks change $q$ by at
+most 1.21\%. Comparing \texttt{large} with \texttt{xxxlarge} across 18 probes
+changes $q$ by up to 7.55\%; under \texttt{xxxlarge}, quantity-aware candidates
+are about 1.1--1.2\% worse than the original incumbent. This is solver-size
+sensitivity within NeuralFoil, not validation against independent physics.
+
+\textbf{Answer and next test.} Quantity-driven scalar preservation is possible
+and empirically strong here, but a reliable, easily optimized full-field inverse
+is not established. Next, jointly constrain field loss and round-trip error,
+and use a prescribed-lift mean-drag objective with independent aerodynamic
+validation. Minimum-over-domain objectives can be nonsmooth when the active
+operating point changes; CST smoothness on the interior does not remove this.
+
+\newpage
+\section*{Reproduction and evidence}
+The active database is in \texttt{data/cst\_reset/}. Its README documents the
+array schema; the raw cache retains all coefficient vectors, fields, confidence,
+axes and generation settings. The catalogue provides one row per shape.
+
+Run from the repository root:
+\begin{verbatim}
+python notebooks/cst_reset.py
+python -m unittest discover -s tests -v
+\end{verbatim}
+\texttt{notebooks/cst\_reset.ipynb} runs the same script and displays the
+evidence. Existing project numerical dependencies suffice. Versions, source
+and cache hashes, split indices, seed, kernels and surrogate parameters are
+recorded. Numerical coordinates and minima can vary across library versions.
+
+Change the objective or field similarity without changing dataset generation:
+\begin{verbatim}
+python notebooks/cst_reset.py --qoi mean_drag
+python notebooks/cst_reset.py --metric drag
+\end{verbatim}
+Alternative runs have separate directories and tables. This PDF describes
+\texttt{min\_drag} with balanced $C_D,C_L,C_M$ similarity. Reusable methods are
+in \texttt{utils/cst\_reduction.py}; orchestration stays with the experiment.
+
+From \texttt{report/}, build the default report:
+\begin{verbatim}
+pdflatex -interaction=nonstopmode -halt-on-error cst_reset.tex
+bibtex cst_reset
+pdflatex -interaction=nonstopmode -halt-on-error cst_reset.tex
+pdflatex -interaction=nonstopmode -halt-on-error cst_reset.tex
+\end{verbatim}
+
+\textbf{Evidence.} Results are in \path{data/cst_reset/min_drag_balanced/}.
+The principal tables are \path{projection_metrics.csv} for preservation and
+\path{optimization.csv} for candidate verification. Companion tables record
+validation searches, assignments, grid checks, model-size checks, and adopted
+designs. Metadata records settings and hashes. Compressed NumPy files preserve
+fitted arrays, decoded coefficients, candidate fields, and all solve statuses.
+Pilot evidence records the narrower initial bandwidth search. All seven figure
+sets are generated by code.
+
+The result is exploratory: a single scrambled design and split, a declared
+confidence-conditioned cohort, a finite operating grid, and surrogate-only
+aerodynamics. There is no universal manifold, unique decoder, guaranteed
+global optimum, geometry-to-latent predictor, CFD validation, or experiment-based
+accuracy claim. The observed field and round-trip failures are part of the
+result and are retained in the evidence.
+
+\small
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

@@ -1,0 +1,233 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=20mm]{geometry}
+\usepackage{amsmath,booktabs,graphicx,hyperref}
+\hypersetup{colorlinks=true,urlcolor=blue,citecolor=blue,linkcolor=blue}
+\graphicspath{{../figures/airfoil_regimes/}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\title{Airfoil functional reduction:\\geometry neighborhoods and operating regimes}
+\author{}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-15mm}
+\section{Where do similar shapes fall in the functional map?}
+The question is whether a two-dimensional aerodynamic representation preserves
+geometric neighborhoods, and whether its clusters describe performance across
+different operating regimes. The existing population contains 170 NACA
+four-digit airfoils: camber $m/c\in\{0,0.02,0.04,0.06,0.08\}$, camber position
+$p/c\in\{0.2,0.4,0.6,0.8\}$, and thickness $t/c=0.06,0.08,\ldots,0.24$.
+Symmetric sections occur once per thickness, with position recorded as zero.
+Cached NeuralFoil predictions at Mach zero cover a $50\times50$ grid on
+$\alpha\in[-15,15]^\circ$, $Re\in[10^6,2\times10^6]$.
+
+The saved multivariate functional PCA uses uniform quadrature in $\alpha$ and
+linear $Re$, with each coefficient divided by its integrated population
+standard deviation $s_c$. This is a discretized product-space functional
+metric, following the multivariate functional framework of
+\cite{happ2016}. The first two PCs retain 88.29\% of variance; seven retain
+at least 99\%. Scores are unwhitened and their saved signs are preserved.
+
+Shape distance uses upper and lower surface coordinates $q_i^u(x),q_i^l(x)$
+at 201 cosine-spaced mean-line stations, with normal thickness offsets and
+the finite trailing edge of the NACA family \cite{jacobs1933}:
+\[
+ d_g(i,j)^2=\frac12\int_0^1
+ \left(\|q_i^u(x)-q_j^u(x)\|^2+\|q_i^l(x)-q_j^l(x)\|^2\right)\,dx.
+\]
+This measures registered contour RMS in chord units, rather than standardized
+parameter distance or nearest-point distance between curves.
+
+\begin{figure}[h]
+\centering\includegraphics[width=\linewidth]{geometry_map.pdf}
+\caption{Identical global functional coordinates, colored by geometric parameters.
+Gray curves connect increasing thickness at fixed camber and position. Position
+zero for symmetric sections is a bookkeeping convention.}
+\end{figure}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule Representation & Distance Spearman correlation & Five-neighbor overlap\\
+\midrule Two global PCs & 0.673 & 36.2\%\\
+Seven global PCs & 0.666 & 44.7\%\\
+Complete fields & 0.666 & 45.3\%\\
+Random neighborhood expectation & --- & 3.0\%\\
+\bottomrule
+\end{tabular}
+\end{center}
+Overlap averages the fraction of each shape neighborhood recovered by the
+aerodynamic neighborhood. Correlations use all 14,365 unordered pairs;
+these are dependent observations, so no significance test is asserted.
+PC1 correlates with camber ($\rho=0.797$), while PC2 mixes camber
+($-0.581$), thickness ($-0.550$), and position ($-0.398$).
+Geometric proximity is partly preserved; the improvement from two to seven
+PCs concerns local neighborhoods even though global distance correlation barely changes.
+
+\newpage
+\section{Partitioning the operating space and defining performance}
+Define angle-magnitude bins low $[0,5]$, middle $[5,10]$, high $[10,15]$
+degrees, and Reynolds bins low $[1,4/3]$, middle $[4/3,5/3]$,
+high $[5/3,2]$, in millions. Their Cartesian product gives nine regimes
+$B_r$, named angle--Reynolds. Boundaries have zero measure. Angle bins combine
+negative and positive incidence with equal weight; they are chosen operating
+intervals, not identified attached-flow or stall regimes.
+
+For any quantity $f$, let
+\[
+ \langle f\rangle_r=\frac{1}{|B_r|}\int_{B_r} f(\alpha,Re)\,d\alpha\,dRe,
+ \qquad
+ P_{ir}=\left(\langle C_D\rangle_r,\langle C_L\rangle_r,
+ \langle|C_L|\rangle_r,\left\langle\frac{|C_L|}{C_D}\right\rangle_r\right).
+\]
+Lower mean drag, higher lift magnitude, and higher efficiency are distinct
+performance objectives in every regime. At low angle, drag and useful lift
+must be examined jointly; at middle angle, efficiency is the primary screening
+quantity; at high angle, drag penalties and maintained lift magnitude matter.
+There is no single optimum without a lift requirement and mission weighting.
+Absolute lift permits bidirectional screening; it is not a positive-lift
+mission objective. Signed mean lift is saved separately to expose camber bias.
+Efficiency averages pointwise ratios, rather than dividing mean lift by mean drag.
+
+The computation integrates piecewise-linear nodal quantities across clipped
+bin boundaries. This avoids assigning an entire grid cell to one regime;
+volume-weighted bin quadratures recover the original whole-domain quadrature.
+The interpolation is applied after evaluating absolute lift and efficiency at
+the nodes. No aerodynamic solver or new confidence estimate is introduced.
+
+We cluster the 27 descriptors
+$(\langle C_D\rangle_r,\langle|C_L|\rangle_r,
+\langle|C_L|/C_D\rangle_r)_{r=1}^9$ after standardizing each descriptor across
+the population. This gives equal marginal weight to each regime and metric.
+These correlated metrics deliberately represent several performance objectives;
+they are not independent physical coordinates. K-means uses $k=4$, seed 42,
+20 initializations and at most 500 iterations. Cluster numbers R1--R4 are
+ordered by mean camber, then thickness. Four clusters retain continuity with
+the previous experiment; an optimal cluster count is not established.
+
+\begin{figure}[h]
+\centering\includegraphics[width=\linewidth]{regime_clusters.pdf}
+\caption{The same regime-performance assignments shown on the existing global
+functional map and on a PCA of the 27 standardized descriptors. Clustering
+uses all descriptors; the right-hand display retains 73.73\% of their variance.}
+\end{figure}
+
+The descriptor-space silhouette is 0.323 and relative centroid SSE is 0.377.
+Agreement with global seven-PC clusters is ARI $=0.488$, compared with
+ARI $=0.980$ between the previous two- and seven-PC partitions.
+Thus the definition of similarity changes substantially when performance
+summaries receive equal weight across operating regimes.
+
+\newpage
+\section{Performance tradeoffs between regime clusters}
+\begin{figure}[h]
+\centering\includegraphics[width=\linewidth]{performance.pdf}
+\caption{Cluster means of per-airfoil regime averages. Columns order angle
+magnitude first, then Reynolds number. Color scales differ between metrics.
+Member medians and 10--90\% quantiles are saved in the companion tables;
+the means do not imply that every member shares the same ranking.}
+\end{figure}
+
+\begin{center}\small
+\input{cluster_table.tex}
+\end{center}
+
+R4 has the largest mean low-angle efficiency: 96.2, 102.2, and 106.6 across
+increasing Reynolds bins. R1 instead has the largest mean middle-angle
+efficiency (70.8--78.8) and high-angle efficiency (60.2--72.0).
+At high angle and low Reynolds, R1 has mean drag 0.022 and efficiency 60.2,
+whereas the thinner R3 group has mean drag 0.107 and efficiency 20.2.
+These observations describe this surrogate and sampled family; thickness
+alone is not established as the cause.
+
+Within-cluster variability remains material. For high-angle/low-Reynolds
+efficiency, member 10--90\% ranges are 51.7--66.6 for R1,
+28.4--53.9 for R2, 7.4--41.0 for R3, and 22.0--40.7 for R4.
+These are descriptive population spreads, not confidence intervals.
+In particular, a cluster label does not determine the best airfoil for a
+specific operating point or prescribed lift.
+
+\newpage
+\section{Regime-local functional structure}
+For each regime, a second K-means fit uses the complete fields restricted to
+that regime, with the original global coefficient scales held fixed. All
+partitions are compared using the same regime-specific field metric:
+\[
+ \mathrm{SSE}_r=\frac{\sum_i\|F_i-\bar F_{g(i)}\|_r^2}
+ {\sum_i\|F_i-\bar F\|_r^2},\qquad
+ \|F\|_r^2=\sum_{c\in\{D,L\}}\frac{\langle F_c^2\rangle_r}{s_c^2}.
+\]
+The reconstruction diagnostic $E_j$ replaces the cluster mean in the
+numerator by the saved $j$-PC reconstruction. Local $V_2$ is the fraction of
+regime field variance captured by a fresh two-dimensional PCA under this
+same restricted metric. These are in-population diagnostics, not held-out errors.
+
+\begin{center}\small
+\input{regime_table.tex}
+\end{center}
+Global denotes the seven-PC whole-domain partition. ARI compares that
+partition with the regime-local partition. Local fits optimize their own
+in-population SSE, so their lower SSE is a descriptive baseline rather than
+evidence of predictive superiority.
+
+\begin{figure}[h]
+\centering\includegraphics[width=.67\linewidth]{local_partitions.pdf}
+\caption{Regime-local cluster memberships drawn on the same global 2D points.
+Rows increase angle magnitude and columns increase Reynolds number. Colors
+are local to each panel and cluster identifiers are not matched across panels.}
+\end{figure}
+
+Two global PCs lose only 3.2--3.4\% of low-angle field energy, but
+11.8--17.7\% at high angle. Two locally fitted PCs retain 85.6--89.3\%
+at high angle and 99.0--99.4\% at low angle. Seven global PCs keep regime
+errors below 1.6\%. Low-angle local partitions have ARI near 0.36 with the
+global partition; high-angle agreement rises from 0.66 to 0.81 across Reynolds
+bins. A global map can therefore obscure regime-specific structure even
+when the global four-cluster partition barely changes between two and seven PCs.
+
+\newpage
+\section{Counterexamples, sensitivity, and scope}
+\begin{figure}[h]
+\centering\includegraphics[width=.80\linewidth]{contour_examples.pdf}
+\caption{Deterministically selected counterexamples. Top: the most separated
+2D pair among the closest 5\% of contour pairs. Bottom: the most different
+contour pair among the closest 5\% of 2D pairs. The registered RMS definition
+and all pair distances are saved; these examples are illustrative extremes.}
+\end{figure}
+NACA4208/NACA4610 have contour RMS 0.0136 chord (3.8th distance percentile)
+but 2D distance at the 64.8th percentile. NACA4810/NACA6224 have contour RMS
+0.0576 chord (86.4th percentile) while their 2D distance is at the 3.2nd
+percentile. Close projected responses can correspond to substantially
+different shapes, and similar shapes need not have close projected responses.
+
+The regime-performance partition is sensitive to scientific choices.
+Positive-only and negative-only incidence give ARI 0.381 and 0.500 against
+the bidirectional fit. Moving angle boundaries to $(0,4,9,15)^\circ$ or
+$(0,6,11,15)^\circ$ gives ARI 0.460 and 0.515. Omitting one middle-angle
+regime gives ARI 0.446--0.450; omitting one low-angle regime gives 0.981.
+Ten 80\% subsample fits, each refitting the standardization and predicting
+the whole population, yield mean ARI 0.899, minimum 0.460. Using three or
+five clusters gives ARI 0.478 or 0.950 against the four-cluster fit.
+These assignments are useful exploratory performance groups, not stable
+physical classes established independently of the chosen bins and metrics.
+
+The data are model predictions, without retained pointwise confidence,
+CFD or experimental validation. NeuralFoil exposes confidence diagnostics
+\cite{neuralfoil}, but this cache cannot support confidence-conditioned claims.
+There is no identified stall boundary, trim constraint, fixed-lift drag
+comparison, extrapolation test, or optimized mission weighting. The next useful
+check is a prescribed-lift, positive-incidence study with confidence filtering
+and higher-fidelity validation of representative members.
+
+\textbf{Reproduction.} Run \texttt{python notebooks/airfoil\_regimes.py} from
+the repository root with the numerical analysis dependencies installed.
+The script verifies the cache hash and saved scores, regenerates CSV/JSON
+evidence and vector figures, and updates the report tables. From
+\texttt{report/}, run \texttt{pdflatex airfoil\_regimes},
+\texttt{bibtex airfoil\_regimes}, then \texttt{pdflatex airfoil\_regimes} twice.
+Software versions, source hashes, seed and generation settings are recorded
+in \texttt{data/airfoil\_regimes/run\_metadata.json}.
+
+\small
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}

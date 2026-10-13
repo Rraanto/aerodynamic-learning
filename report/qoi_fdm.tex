@@ -1,0 +1,142 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=23mm]{geometry}
+\usepackage{amsmath,amssymb,graphicx,booktabs,longtable,hyperref}
+\setlength{\emergencystretch}{2em}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\title{Two-dimensional quantity-aware functional diffusion maps\\Objective dependence and inverse shape design}
+\author{Computational research report}
+\date{7 October 2026}
+\begin{document}
+\maketitle
+\begin{abstract}
+This study fixes the reduction method and varies the scalar quantity used to construct its similarity kernel. Twelve aerodynamic objectives are compared on the same directly sampled CST airfoil population. Three data splits assess conditional objective preservation, aerodynamic-field recovery, and geometric reconstruction. A separate design experiment optimizes a fitted objective in two latent coordinates, decodes candidates to CST coefficients, and re-evaluates their aerodynamics. Grid refinement and a larger NeuralFoil network test sensitivity. The distinction between a useful objective coordinate and an invertible shape representation is central: a low objective reconstruction error does not establish either geometry identification or reliable design improvement.
+\end{abstract}
+\tableofcontents
+\section{Question, scope, and hypotheses}
+The question is whether changing the quantity of interest (QoI) changes what a two-dimensional functional diffusion map preserves, and whether the resulting coordinates support shape optimization. The first hypothesis is that closely related objectives induce similar orderings, while moment, lift, and drag objectives retain different information. The second is that scalar-targeted tuning favors objective preservation at the expense of full fields and geometry. The third is that a decoder can produce admissible shapes without being an inverse of the aerodynamic encoder. The experiment measures each claim rather than identifying scalar accuracy with successful optimization.
+
+This is an extension of the existing CST experiment. Its original database and results are preserved. Every aerodynamic evaluation here uses NeuralFoil; neither the original corpus nor the newly decoded designs constitute experimental or CFD validation. The functional construction follows the functional-distance approach of Barroso et al.\ \cite{barroso2024}. Adding a standardized scalar distance is this repository's experimental quantity-aware modification, not a claim about the exact method proposed in that paper.
+
+\section{Population and operating domain}
+The source contains 768 degree-seven CST geometries, with 15 independent sampling variables. Upper and lower Bernstein coefficients are $h+b$ and $-h+b$, with $h_j\in[0.10,0.30]$, $b_j\in[-0.06,0.10]$, and $b_0=0$. The class function is $\sqrt{x}(1-x)$; the fixed trailing-edge gap is 0.0025 chord. Original sampling required maximum thickness between 0.08 and 0.20 chord and maximum absolute camber at most 0.05 chord on 301 cosine-spaced stations. These are computational screens, not structural or manufacturing certification.
+
+The operating grid has 31 incidence values from $-5$ to $12$ degrees and 21 geometrically spaced Reynolds numbers from $3\times10^5$ to $3\times10^6$. Each shape supplies $C_D,C_L,C_M$ and confidence on all 651 points. The configuration is Mach zero, $n_{\rm crit}=9$, natural transition, and model size \texttt{large}. The original confidence threshold is 0.75 at every point. NeuralFoil documents confidence as a model diagnostic\ \cite{neuralfoil}; it is not an aerodynamic error bound. The common analysis cohort additionally requires every trimmed objective to be finite. Exclusions and exact sample counts are recorded below.
+
+The operating measure uses normalized trapezoidal weights uniform in incidence and in $\log Re$, with $\sum w_{ar}=1$. No claim is made that this uniform measure describes an aircraft mission. Splits use seeds 42, 43, and 44, assigning 65\% to training, 15\% to validation, and the remainder to testing. These overlapping splits measure split sensitivity, not independent experimental replications or population confidence intervals.
+
+\section{Twelve objective definitions}
+All objectives are minimized. All coefficients and ratios are dimensionless. Let $\langle g\rangle=\sum w_{ar}g_{ar}$ and $C_L^+=\max(C_L,0)$. Unless specified otherwise, extrema range over the complete sampled operating domain.
+\begin{longtable}{p{.28\linewidth}p{.65\linewidth}}
+\toprule Objective & Definition and interpretation\\\midrule
+Minimum drag & $\min C_D$. No lift requirement; potentially selects an operationally irrelevant point.\\
+Best drag/lift & $\min_{C_L>0} C_D/C_L$. Positive-lift restriction avoids negative-lift ratios. Equivalent ordering to maximizing positive $L/D$, but the nonlinear reciprocal changes scalar-distance geometry.\\
+Mean drag & $\langle C_D\rangle$. Broad-domain average under the declared measure.\\
+Multipoint drag & Equal mean at the nine combinations $\alpha=0,4,8$ degrees and $Re=0.3,1,3$ million. Interpolate linearly in incidence and log Reynolds.\\
+Worst drag & $\max C_D$. A minimax objective on the sampled domain.\\
+Drag variability & $\sqrt{\langle(C_D-\langle C_D\rangle)^2\rangle}$. Stability alone can reward uniformly poor drag.\\
+Mean efficiency & $-\langle C_L^+/C_D\rangle$. Negative lift contributes zero; not the earlier absolute-lift efficiency metric.\\
+Best endurance & $-\max (C_L^+)^{3/2}/C_D$. A section-level proxy, without aircraft propulsion or weight modeling.\\
+Moment RMS & $\sqrt{\langle C_M^2\rangle}$. Encourages low pitching-moment magnitude.\\
+Lift tracking & $\sqrt{\langle(C_L-0.7)^2\rangle}$. Deliberately tests a lift-focused descriptor across the whole domain.\\
+Trimmed drag & Equal mean of nine interpolated drag values at $C_L=0.4,0.7,1.0$ and $Re=0.3,1,3$ million.\\
+Trimmed worst drag & Maximum over those same nine prescribed-lift conditions.\\\bottomrule
+\end{longtable}
+For trimming, first interpolate each polar to the required Reynolds number. Select the first increasing incidence segment crossing the target lift, and interpolate drag along that segment. Do not sort a nonmonotone polar by lift, extrapolate beyond available lift, or silently replace an unavailable condition. A missing crossing produces a missing objective and excludes that shape from the common comparison cohort. This is a grid-based approximation to trim, not a nonlinear aerodynamic trim solve. Grid refinement probes its sensitivity.
+
+The multipoint and prescribed-lift objectives are intentionally distinct: fixed incidence permits lift to vary with geometry; prescribed lift compares drag at a common load coefficient. A minimum-drag improvement therefore need not imply an improvement for a useful mission.
+
+\section{Functional reduction and evaluation protocol}
+Training-only integrated channel standard deviations $s_c$ define the field features
+\[
+ X_{i,arc}=\sqrt{w_{ar}}\,[F_{i,arc}-\overline F_{arc}]/s_c.
+\]
+For scalar objective $q_i$, the augmented distance and affinity are
+\[
+ d_{ij}^2=\frac{\|X_i-X_j\|^2}{\operatorname{median}_{k<l}\|X_k-X_l\|^2}
+ +\eta\frac{(q_i-q_j)^2}{s_q^2},\qquad
+ K_{ij}=\exp(-d_{ij}^2/\epsilon),
+\]
+where $s_q$ is the training sample standard deviation and $\epsilon=b\operatorname{median}_{i<j}d_{ij}^2$. Density normalization uses $\rho_i=\sum_j K_{ij}$, $\widetilde K_{ij}=K_{ij}/(\rho_i\rho_j)$, and row normalization gives a Markov matrix. The first two nonconstant eigenfunctions, multiplied by their eigenvalues, give diffusion coordinates at time one. The existing implementation supplies the same normalization for Nystr\"om extension.
+
+The validation search uses $\eta\in\{0.25,1,4,16\}$ and $b\in\{0.25,1,4\}$: 12 settings for every objective and split. Selection minimizes validation QoI NRMSE from ten-neighbor inverse-squared-distance interpolation in native diffusion coordinates. Hyperparameters are not selected on the test set. Field validation errors are retained for every setting, so the objective--field tradeoff remains auditable. This is a finite search, not evidence of a globally best reduction.
+
+Crucially, test encoding consumes the complete aerodynamic field and its true QoI. The scalar preservation experiment is conditional representation analysis, not blind performance prediction from shape. The trivial coordinate $z_1=q$ would preserve the supplied scalar exactly. This logical control prevents interpreting low NRMSE as a new aerodynamic predictor. The practical question is what additional information remains in the two coordinates.
+
+Test metrics include QoI NRMSE normalized by training $s_q$, Spearman rank correlation, and five-neighbor recall relative to full field features. Field relative squared error is the sum of squared balanced feature residuals divided by the squared deviations from the training field mean. A value above one is worse than that mean predictor. Shape errors are RMS ordinate errors over both surfaces and the 301 cosine stations, expressed as fractions of chord; this is a station-weighted diagnostic, not a uniform-chord integral. Both ten-neighbor geometry prediction and barycentric inversion are measured, with a training-mean shape baseline.
+
+\section{Inverse mapping and optimization experiment}
+For each fitted map, a Delaunay triangulation of standardized training coordinates defines a piecewise affine decoder. For a query in a triangle,
+\[
+ D(z)=\sum_{j=1}^{3}\beta_j(z)p_j,\qquad \beta_j\geq0,\quad\sum_j\beta_j=1,
+\]
+where $p_j$ are the 16 stored CST coefficients. The decoder interpolates training shapes exactly at vertices, but this alone says nothing about holdout inversion. Test queries outside the training convex hull are counted as unsupported; they are not extrapolated. Shape inversion errors refer only to supported queries, so hull coverage is reported separately.
+
+Convex coefficient interpolation preserves the original coefficient box, equal leading-edge thickness coefficients, and positive thickness in this family. It also preserves upper bounds on thickness and absolute camber. The lower bound on maximum thickness is not generally preserved by convex averaging, so all design candidates receive an explicit geometry check. The decoder is continuous within the triangulation, with possible derivative jumps at triangle boundaries.
+
+For seed 42, the first 30 supported test queries in the seeded test order are decoded and evaluated with NeuralFoil. We compare reconstructed objective and the round trip $E(F(D(z)))-z$, normalized by the median training latent pair distance. These queries provide a small deterministic diagnostic, not a worst-case guarantee. The report retains confidence failures.
+
+A Gaussian RBF kernel-ridge objective surrogate is tuned on validation data over ridge parameters $0.001,0.01,0.1$ and length multipliers $0.5,1,2$. Eight-start SLSQP optimizes that surrogate inside the training latent convex hull. One start is the best training objective and seven are seeded convex mixtures. Each resulting shape is evaluated on the original grid, on a $61\times41$ refined grid, and with model size \texttt{xxxlarge} on the original grid. Each comparison re-evaluates the same best-training incumbent under the matching settings. The larger network is a same-family sensitivity check, not independent physical validation.
+
+The candidate with the lowest actual coarse-grid objective is used for the summary, subject to geometry, confidence, and optimizer success checks. Selecting after re-evaluation costs eight candidate evaluations per objective and must not be confused with a single surrogate prediction. Positive gain means improvement, $100(q_{\rm incumbent}-q_{\rm candidate})/|q_{\rm incumbent}|$, including for negative objectives. A credible gain should survive both sensitivity checks. No direct 15-variable optimization baseline is run; this study cannot establish a computational advantage or a global optimum.
+
+\clearpage
+\section{Numerical results}
+\input{qoi_fdm_results.tex}
+\clearpage
+\begin{figure}[p]\centering
+\includegraphics[width=\linewidth]{../figures/qoi_fdm/embeddings.pdf}
+\caption{Seed-42 embeddings for all twelve objectives, colored by the respective objective. Axis orientations and scales are not identifiable across separately fitted maps; apparent rotation or sign differences have no physical significance. Thin curves or compressed regions indicate that two plotted coordinates need not provide two independent useful design directions.}
+\end{figure}\clearpage
+\begin{figure}[p]\centering
+\includegraphics[width=\linewidth]{../figures/qoi_fdm/metrics.pdf}
+\caption{Test metrics across the three splits. Each dot is one split, not a confidence interval. QoI error is conditional on full-field encoding. Inverse shape error includes supported queries only; hull coverage is given in the result table.}
+\end{figure}\clearpage
+\begin{figure}[p]\centering
+\includegraphics[width=.92\linewidth]{../figures/qoi_fdm/correlations.pdf}
+\caption{Spearman correlations of minimization objectives on the common corpus. Positive correlation means similar ranking of shapes. This does not imply identical kernels: nonlinear transformations can preserve ranks while changing standardized scalar distances.}
+\end{figure}\clearpage
+\clearpage
+\begin{figure}[ht]\centering
+\includegraphics[width=\linewidth]{../figures/qoi_fdm/optimization.pdf}
+\caption{Re-evaluated gains of the selected candidates relative to the best training shape for each objective, and the geometry of the mean-efficiency candidate. Negative gains denote deterioration. The candidate selection uses coarse-grid evaluations; the same candidate is compared under both sensitivity checks.}
+\end{figure}
+\section{Feasibility of latent-space shape optimization}
+There are three distinct notions of inversion. Exact recovery of the original arbitrary shape would require $D(E(F(p)))=p$ throughout the sampled 15-dimensional shape family. Locally, a differentiable encoder from 15 variables to two has Jacobian rank at most two. A differentiable left inverse on an open 15-dimensional set is therefore impossible: the derivative of the composition cannot equal the rank-15 identity. This rank argument applies to the full family, not necessarily to a restricted two-dimensional design manifold, a finite database, or a nonsmooth pathological encoding. It also does not prove that each finite-sample collision is exact.
+
+A weaker and potentially useful inverse selects one representative shape for each coordinate. It requires approximate latent consistency, $E(F(D(z)))\approx z$, acceptable geometry and confidence, and preservation of the objective. The Delaunay decoder is such a proposed selection. The training hull is only a geometric enclosure of observed latent points; it is not established as the image of physically attainable shapes. A large measured round-trip residual reveals the gap. Furthermore, a field-aware encoder still requires an aerodynamic evaluation to locate a new shape, so latent encoding itself is not a cheap forward model.
+
+A third notion is task-specific optimization: even an inaccurate shape reconstruction can be useful if it consistently generates better admissible designs. The candidate re-evaluations test this weaker claim directly. In particular, improving a latent RBF prediction does not establish improvement of $q(F(D(z)))$. Decoder averaging can produce unexpected aerodynamic changes, and the conditional encoder can discard geometry directions essential for optimization.
+
+A practical next formulation is to optimize the actual decoded objective with a trust region around validated samples,
+\[
+ \min_{z}\ q(F(D(z)))\quad\text{subject to}\quad
+ g(D(z))\leq0,\quad c(F(D(z)))\geq0.75,\quad
+ \frac{\|E(F(D(z)))-z\|}{r_z}\leq\tau.
+\]
+Here $g$ encodes geometry restrictions, $c$ is minimum confidence, and $r_z$ is the training median latent distance. The tolerance $\tau$ must be calibrated against observed design error, not arbitrarily interpreted as a physical guarantee. Direct aerodynamic evaluation removes surrogate objective inconsistency but not representational loss. A local decoder, more latent dimensions, or a decoder conditioned on thickness and moment targets may improve design coverage; none is demonstrated by this experiment. Multi-objective kernel augmentation is also a distinct future experiment rather than a result of the present scalar comparison.
+
+\section{Additional quantities worth testing}
+Beyond the twelve executed objectives, the following extensions address distinct design decisions. They are proposals, not computed findings.
+\begin{enumerate}
+\item Mission-weighted prescribed-lift drag: weights from flight duration, speed, and loading, replacing an arbitrary uniform measure.
+\item Tail-risk drag (CVaR): mean of the worst operating-condition tail, with an explicitly defined probability distribution and tail probability.
+\item Trimmed drag plus pitching-moment constraint: prevent a section-level drag gain that increases aircraft trim cost.
+\item Robust drag under incidence and Reynolds uncertainty: distinguish uncertain operation from uniform domain coverage.
+\item Roughness or forced-transition drag penalty: evaluate clean and contaminated conditions using appropriate transition settings.
+\item Lift margin before stall: requires a broader polar, an explicit stall definition, and model validation in that regime.
+\item Laminar-bucket width at prescribed drag tolerance: quantify useful operating range rather than a single best point.
+\item Lift-slope and linearity error: characterize predictable control response over a selected attached-flow interval.
+\item Moment variation with lift: target trim stability while recognizing that a section alone does not determine aircraft stability.
+\item Thickness/area-constrained aerodynamic merit: retain structural volume rather than allowing geometry averages to erase it.
+\item Sensitivity to manufacturing perturbations: propagate coefficient or surface perturbations and penalize objective variance.
+\item Cross-model discrepancy at mission conditions: use a validated higher-fidelity discrepancy as a risk descriptor, not just neural-network size disagreement.
+\end{enumerate}
+These objectives require operating assumptions and constraints to avoid degenerate solutions. For example, minimizing drag variance can favor consistently high drag, minimizing moment can sacrifice lift, and maximizing a single efficiency point can ignore the rest of the mission. Composite penalties need declared scales; vector-valued Pareto comparisons avoid concealing tradeoffs but require a separate kernel and evaluation design.
+
+\section{Reproducibility and limitations}
+Run \texttt{notebooks/qoi\_fdm.py} from the repository root with the numerical dependencies already used by the CST experiment. Set BLAS and OpenMP threads to one for a stable inexpensive dense eigensolve. The script writes all candidate outcomes, tuning trials, holdout inverse diagnostics, embeddings, split indices, objective correlations, software versions, and source/database SHA-256 hashes under \texttt{data/qoi\_fdm/}. Figures are generated from the same run. Objective conventions have analytic unit tests, including unreachable lift targets. The report source and its generated result fragment are stored under \texttt{report/}; the original CST report remains intact.
+
+The comparison is limited to one sampled CST population, a confidence-conditioned common cohort, three overlapping splits, a finite tuning grid, one decoder, and a scalar-based selection rule. Objectives share data, so differences across them are paired, not independent. The first two diffusion coordinates may include spectral harmonics or localized eigenfunctions; plotting two axes does not establish intrinsic dimension two. The optimization experiment uses only seed 42 and eight starts, and grid refinement does not prove convergence. Geometry screens inspect finite stations. No independent XFoil/CFD validation, manufacturing model, aircraft-level trim, or direct-space budget comparison is included. These limitations define what remains necessary before adopting a latent space as a design parameterization.
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
